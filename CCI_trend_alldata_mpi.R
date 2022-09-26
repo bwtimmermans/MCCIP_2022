@@ -99,13 +99,12 @@
 # Specify data files and load all data (only summary statistics, so do all in one).
 
 # Data path.
-   #data_path <- "/backup/datasets/CCI/"
-   data_path <- "../datasets/L4/"
+   data_path <- "/backup/datasets/CCI/L4_30/"
 
 # File base name.
    mat_filenames <- matrix(NA,nrow=length(anal_years),ncol=12)
    for (y_idx in 1:length(anal_years)) {
-      mat_filenames[y_idx,] <- paste(data_path,"ESACCI-SEASTATE-L4-SWH-MULTI_1M-",anal_years[y_idx],all_months,"-fv01.nc",sep='')
+      mat_filenames[y_idx,] <- paste(data_path,anal_years[y_idx],"/ESACCI-SEASTATE-L4-SWH-MULTI_1M-",anal_years[y_idx],all_months,"-fv01.nc",sep='')
    }
 
 # Load data.
@@ -116,15 +115,15 @@
          nc1 = nc_open(mat_filenames[y_idx,m_idx])
          mat_time[y_idx,m_idx] <- ncvar_get(nc1,"time")
 # Statistics.
-         array_CCI[,,y_idx,m_idx,1] <- ncvar_get(nc1,"swh_count",start=c(lon.start.idx.nc,lat.start.idx,1), count=c((lon.dim.node),dim.lat,1))
-         array_CCI[,,y_idx,m_idx,2] <- ncvar_get(nc1,"swh_mean",start=c(lon.start.idx.nc,lat.start.idx,1), count=c((lon.dim.node),dim.lat,1))
+         array_CCI[,,y_idx,m_idx,1] <- ncvar_get(nc1,"swh_count",start=c(lon.start.idx.nc,lat.start.idx), count=c((lon.dim.node),dim.lat))
+         array_CCI[,,y_idx,m_idx,2] <- ncvar_get(nc1,"swh_mean",start=c(lon.start.idx.nc,lat.start.idx), count=c((lon.dim.node),dim.lat))
 # Var.
          #array_CCI[,,y_idx,m_idx,3] <- ncvar_get(nc1,"swh_rms",start=c(lon.start.idx.nc,lat.start.idx,1), count=c((lon.dim.node),dim.lat,1))
 # Squared sum is sum of squared values.
-         array_CCI[,,y_idx,m_idx,3] <- ncvar_get(nc1,"swh_squared_sum",start=c(lon.start.idx.nc,lat.start.idx,1), count=c(lon.dim.node,dim.lat,1))
+         array_CCI[,,y_idx,m_idx,3] <- ncvar_get(nc1,"swh_squared_sum",start=c(lon.start.idx.nc,lat.start.idx), count=c(lon.dim.node,dim.lat))
 # Sum.
-         array_CCI[,,y_idx,m_idx,4] <- ncvar_get(nc1,"swh_sum",start=c(lon.start.idx.nc,lat.start.idx,1), count=c(lon.dim.node,dim.lat,1))
-         array_CCI[,,y_idx,m_idx,5] <- ncvar_get(nc1,"swh_rms",start=c(lon.start.idx.nc,lat.start.idx,1), count=c((lon.dim.node),dim.lat,1))
+         array_CCI[,,y_idx,m_idx,4] <- ncvar_get(nc1,"swh_sum",start=c(lon.start.idx.nc,lat.start.idx), count=c(lon.dim.node,dim.lat))
+         array_CCI[,,y_idx,m_idx,5] <- ncvar_get(nc1,"swh_rms",start=c(lon.start.idx.nc,lat.start.idx), count=c((lon.dim.node),dim.lat))
 
          nc_close(nc1)
       }
@@ -132,96 +131,96 @@
 # Clean up missing values.
    array_CCI[array_CCI > 50] <- NA
 
-#-----------------------------------------------------------------------#
-# Load index data (ONI, NAO).
-#-----------------------------------------------------------------------#
-# ONI.
-   df_ONI <- read.csv("/home/ben/research/NOC/SRS_wave_analysis/datasets/indices/ONI.csv")
-# Matrix containing mean, var and "min or max".
-   mat_ONI <- matrix(NA,nrow=dim(df_ONI)[1],ncol=3)
-   mat_ONI[,1] <- apply(X=df_ONI[,2:13],MAR=1,FUN=mean)
-   mat_ONI[,2] <- apply(X=df_ONI[,2:13],MAR=1,FUN=var)
-# Min or max based upon whether the mean is positive or negative.
-   #for (i in 1:dim(df_ONI)[1]) {
-   for (i in 1:69) {
-      if (mat_ONI[i,1] < 0) {
-         mat_ONI[i,3] <- min(df_ONI[i,2:13])
-      } else {
-         mat_ONI[i,3] <- max(df_ONI[i,2:13])
-      }
-   }
-# Column and row names.
-   colnames(mat_ONI) <- c("ONI_mean","ONI_var","ONI_minmax")
-   rownames(mat_ONI) <- df_ONI[,1]
-# ONI range based upon 2018.
-   ONI_years <- which( as.numeric(rownames(mat_ONI)) == anal_years[1] ):which( as.numeric(rownames(mat_ONI)) == anal_years[length(anal_years)] )
-
-# NAO.
-   df_NAO <- read.csv("/home/ben/research/NOC/SRS_wave_analysis/datasets/indices/norm.nao.monthly.b5001.current.ascii.table",header=FALSE,sep=',')
-# Matrix containing mean, var and "min or max".
-   mat_NAO <- matrix(NA,nrow=dim(df_NAO)[1],ncol=3)
-   mat_NAO[,1] <- apply(X=df_NAO[,2:13],MAR=1,FUN=mean)
-   mat_NAO[,2] <- apply(X=df_NAO[,2:13],MAR=1,FUN=var)
-# Min or max based upon whether the mean is positive or negative.
-   #for (i in 1:dim(df_NAO)[1]) {
-   for (i in 1:69) {
-      if (mat_NAO[i,1] < 0) {
-         mat_NAO[i,3] <- min(df_NAO[i,2:13])
-      } else {
-         mat_NAO[i,3] <- max(df_NAO[i,2:13])
-      }
-   }
-# Column and row names.
-   colnames(mat_NAO) <- c("NAO_mean","NAO_var","NAO_minmax")
-   rownames(mat_NAO) <- df_ONI[,1]
-# NAO range based upon 2018.
-   NAO_years <- which( as.numeric(rownames(mat_NAO)) == anal_years[1] ):which( as.numeric(rownames(mat_NAO)) == anal_years[length(anal_years)] )
-
-# PDO.
-   df_PDO <- read.csv("/home/ben/research/NOC/SRS_wave_analysis/datasets/indices/PDO_NOAA.csv",header=TRUE, sep=',')
-# Matrix containing mean, var and "min or max".
-   mat_PDO_temp <- t(matrix(df_PDO$Value[-c(1981:1985)],nrow=12))
-
-   mat_PDO <- matrix(NA,nrow=dim(mat_PDO_temp)[1],ncol=3)
-   mat_PDO[,1] <- apply(X=mat_PDO_temp,MAR=1,FUN=mean)
-   mat_PDO[,2] <- apply(X=mat_PDO_temp,MAR=1,FUN=var)
-# Min or max based upon whether the mean is positive or negative.
-   #for (i in 1:dim(df_PDO)[1]) {
-   for (i in 1:dim(mat_PDO_temp)[1]) {
-      if (mat_PDO[i,1] < 0) {
-         mat_PDO[i,3] <- min(mat_PDO_temp[i,])
-      } else {
-         mat_PDO[i,3] <- max(mat_PDO_temp[i,])
-      }
-   }
-# Column and row names.
-   colnames(mat_PDO) <- c("PDO_mean","PDO_var","PDO_minmax")
-   rownames(mat_PDO) <- 1854:2018
-# PDO range based upon 2018.
-   PDO_years <- which( as.numeric(rownames(mat_PDO)) == anal_years[1] ):which( as.numeric(rownames(mat_PDO)) == anal_years[length(anal_years)] )
-
-# AO.
-   df_AO <- read.csv("/home/ben/research/NOC/SRS_wave_analysis/datasets/indices/AO_NOAA.csv",header=TRUE, sep=',')
-# Matrix containing mean, var and "min or max".
-   mat_AO_temp <- t(matrix(df_AO$Value[-c(829:833)],nrow=12))
-
-   mat_AO <- matrix(NA,nrow=dim(mat_AO_temp)[1],ncol=3)
-   mat_AO[,1] <- apply(X=mat_AO_temp,MAR=1,FUN=mean)
-   mat_AO[,2] <- apply(X=mat_AO_temp,MAR=1,FUN=var)
-# Min or max based upon whether the mean is positive or negative.
-   for (i in 1:dim(mat_AO_temp)[1]) {
-      if (mat_AO[i,1] < 0) {
-         mat_AO[i,3] <- min(mat_AO_temp[i,])
-      } else {
-         mat_AO[i,3] <- max(mat_AO_temp[i,])
-      }
-   }
-# Column and row names.
-   colnames(mat_AO) <- c("AO_mean","AO_var","AO_minmax")
-   rownames(mat_AO) <- 1950:2018
-# AO range based upon 2018.
-   AO_years <- which( as.numeric(rownames(mat_AO)) == anal_years[1] ):which( as.numeric(rownames(mat_AO)) == anal_years[length(anal_years)] )
-
+##-----------------------------------------------------------------------#
+## Load index data (ONI, NAO).
+##-----------------------------------------------------------------------#
+## ONI.
+#   df_ONI <- read.csv("/home/ben/research/NOC/SRS_wave_analysis/datasets/indices/ONI.csv")
+## Matrix containing mean, var and "min or max".
+#   mat_ONI <- matrix(NA,nrow=dim(df_ONI)[1],ncol=3)
+#   mat_ONI[,1] <- apply(X=df_ONI[,2:13],MAR=1,FUN=mean)
+#   mat_ONI[,2] <- apply(X=df_ONI[,2:13],MAR=1,FUN=var)
+## Min or max based upon whether the mean is positive or negative.
+#   #for (i in 1:dim(df_ONI)[1]) {
+#   for (i in 1:69) {
+#      if (mat_ONI[i,1] < 0) {
+#         mat_ONI[i,3] <- min(df_ONI[i,2:13])
+#      } else {
+#         mat_ONI[i,3] <- max(df_ONI[i,2:13])
+#      }
+#   }
+## Column and row names.
+#   colnames(mat_ONI) <- c("ONI_mean","ONI_var","ONI_minmax")
+#   rownames(mat_ONI) <- df_ONI[,1]
+## ONI range based upon 2018.
+#   ONI_years <- which( as.numeric(rownames(mat_ONI)) == anal_years[1] ):which( as.numeric(rownames(mat_ONI)) == anal_years[length(anal_years)] )
+#
+## NAO.
+#   df_NAO <- read.csv("/home/ben/research/NOC/SRS_wave_analysis/datasets/indices/norm.nao.monthly.b5001.current.ascii.table",header=FALSE,sep=',')
+## Matrix containing mean, var and "min or max".
+#   mat_NAO <- matrix(NA,nrow=dim(df_NAO)[1],ncol=3)
+#   mat_NAO[,1] <- apply(X=df_NAO[,2:13],MAR=1,FUN=mean)
+#   mat_NAO[,2] <- apply(X=df_NAO[,2:13],MAR=1,FUN=var)
+## Min or max based upon whether the mean is positive or negative.
+#   #for (i in 1:dim(df_NAO)[1]) {
+#   for (i in 1:69) {
+#      if (mat_NAO[i,1] < 0) {
+#         mat_NAO[i,3] <- min(df_NAO[i,2:13])
+#      } else {
+#         mat_NAO[i,3] <- max(df_NAO[i,2:13])
+#      }
+#   }
+## Column and row names.
+#   colnames(mat_NAO) <- c("NAO_mean","NAO_var","NAO_minmax")
+#   rownames(mat_NAO) <- df_ONI[,1]
+## NAO range based upon 2018.
+#   NAO_years <- which( as.numeric(rownames(mat_NAO)) == anal_years[1] ):which( as.numeric(rownames(mat_NAO)) == anal_years[length(anal_years)] )
+#
+## PDO.
+#   df_PDO <- read.csv("/home/ben/research/NOC/SRS_wave_analysis/datasets/indices/PDO_NOAA.csv",header=TRUE, sep=',')
+## Matrix containing mean, var and "min or max".
+#   mat_PDO_temp <- t(matrix(df_PDO$Value[-c(1981:1985)],nrow=12))
+#
+#   mat_PDO <- matrix(NA,nrow=dim(mat_PDO_temp)[1],ncol=3)
+#   mat_PDO[,1] <- apply(X=mat_PDO_temp,MAR=1,FUN=mean)
+#   mat_PDO[,2] <- apply(X=mat_PDO_temp,MAR=1,FUN=var)
+## Min or max based upon whether the mean is positive or negative.
+#   #for (i in 1:dim(df_PDO)[1]) {
+#   for (i in 1:dim(mat_PDO_temp)[1]) {
+#      if (mat_PDO[i,1] < 0) {
+#         mat_PDO[i,3] <- min(mat_PDO_temp[i,])
+#      } else {
+#         mat_PDO[i,3] <- max(mat_PDO_temp[i,])
+#      }
+#   }
+## Column and row names.
+#   colnames(mat_PDO) <- c("PDO_mean","PDO_var","PDO_minmax")
+#   rownames(mat_PDO) <- 1854:2018
+## PDO range based upon 2018.
+#   PDO_years <- which( as.numeric(rownames(mat_PDO)) == anal_years[1] ):which( as.numeric(rownames(mat_PDO)) == anal_years[length(anal_years)] )
+#
+## AO.
+#   df_AO <- read.csv("/home/ben/research/NOC/SRS_wave_analysis/datasets/indices/AO_NOAA.csv",header=TRUE, sep=',')
+## Matrix containing mean, var and "min or max".
+#   mat_AO_temp <- t(matrix(df_AO$Value[-c(829:833)],nrow=12))
+#
+#   mat_AO <- matrix(NA,nrow=dim(mat_AO_temp)[1],ncol=3)
+#   mat_AO[,1] <- apply(X=mat_AO_temp,MAR=1,FUN=mean)
+#   mat_AO[,2] <- apply(X=mat_AO_temp,MAR=1,FUN=var)
+## Min or max based upon whether the mean is positive or negative.
+#   for (i in 1:dim(mat_AO_temp)[1]) {
+#      if (mat_AO[i,1] < 0) {
+#         mat_AO[i,3] <- min(mat_AO_temp[i,])
+#      } else {
+#         mat_AO[i,3] <- max(mat_AO_temp[i,])
+#      }
+#   }
+## Column and row names.
+#   colnames(mat_AO) <- c("AO_mean","AO_var","AO_minmax")
+#   rownames(mat_AO) <- 1950:2018
+## AO range based upon 2018.
+#   AO_years <- which( as.numeric(rownames(mat_AO)) == anal_years[1] ):which( as.numeric(rownames(mat_AO)) == anal_years[length(anal_years)] )
+#
 # ================================================================= #
 # Data structures.
    mat_list_annual_stats_node <- matrix(list(),nrow=dim(mat_lat_grid_idx)[2],ncol=dim(mat_lon_grid_idx)[2])
@@ -312,7 +311,8 @@
          rownames(df_stats) <- anal_years
 
 # Trend (linear regression).
-         df_Q <- data.frame(cbind(year=anal_years,df_stats,mat_ONI[ONI_years,],mat_NAO[NAO_years,],mat_PDO[PDO_years,],mat_AO[AO_years,]))
+         #df_Q <- data.frame(cbind(year=anal_years,df_stats,mat_ONI[ONI_years,],mat_NAO[NAO_years,],mat_PDO[PDO_years,],mat_AO[AO_years,]))
+         df_Q <- data.frame(cbind(year=anal_years,df_stats))
 
          mat_trend <- matrix(NA,nrow=length(vec_q),ncol=9)
          for (qq in 1:2) {
