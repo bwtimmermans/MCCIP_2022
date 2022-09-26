@@ -1,6 +1,6 @@
 # source("/home/ben/research/NOC/projects/MCCIP_2022/CCI_trend_alldata_mpi.R")
 
-# Script to load CCI dataset and obtain long term trends.
+# Script to load CCI L4 dataset and obtain long term trends.
 # BT 09/2022
 
 # Libraries.
